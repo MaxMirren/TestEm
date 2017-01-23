@@ -1,24 +1,17 @@
 package com.testem.maxm.testem;
 
 import com.testem.maxm.testem.connectivity.ServerInterface;
+import com.testem.maxm.testem.connectivity.Functions;
 
-import android.Manifest;
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.content.ClipData;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
@@ -175,9 +168,9 @@ public class AuthActivity extends AppCompatActivity {
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.sign_in:
-                getDeviceId();
                 ServerInterface serverInterface = new ServerInterface();
                 serverInterface.sendData(this, emailTyped, passwordTyped);
+                serverInterface.followingFunction = Functions.AUTHENTIFIER;
                 serverInterface.execute("");
                 break;
             default:
@@ -189,10 +182,11 @@ public class AuthActivity extends AppCompatActivity {
         Toast.makeText(this, string, Toast.LENGTH_LONG).show();
     }
 
-    public void getDeviceId() {
+    public String getDeviceId() {
         TelephonyManager tm = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
         String number = tm.getDeviceId();
-        makeToast(number);
+        return number;
+       // makeToast(number);
     }
 }
 

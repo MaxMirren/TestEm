@@ -1,23 +1,21 @@
 package com.testem.maxm.testem.connectivity;
 
 import com.testem.maxm.testem.AuthActivity;
+import com.testem.maxm.testem.connectivity.Functions;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
-import android.content.ClipData;
 import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by Mr_95 on Jan 17, 2017.
@@ -33,46 +31,27 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
     final String DATABASE = "testem";
     final String IP = "5.101.194.75";
 
-    public String z = "";
+    public String info = "";
     public String email, password;
     private Boolean isSuccess = false;
+    public Functions followingFunction;
 
+    User currentUser;
 
     @Override
     protected String doInBackground(String... params)
     {
-            try
-            {
-                con = connectionclass(USERNAME, PASSWORD, DATABASE, IP);        // Connect to database
-                if (con == null)
-                {
-                    z = "Check Your Internet Access!";
-                }
-                else
-                {
-                    String query = "select * from accounts where email= '" + email +"' AND password= '" + password + "'";
-                    Statement stmt = con.createStatement();
-                    ResultSet rs = stmt.executeQuery(query);
-                    if(rs.next())
-                    {
-                        z = "Login is successful";
-                        isSuccess=true;
-                        //con.close();
-                    }
-                    else
-                    {
-                        z = "Invalid Credentials!";
-                        isSuccess = false;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                isSuccess = false;
-                z = ex.getMessage().toString() + "  ";
-                z = ex.toString();
-            }
-        return z;
+        switch (followingFunction) {
+            case AUTHENTIFIER:
+                checklogIn();
+                break;
+            case REPORTER:
+
+                break;
+            default:
+                break;
+        }
+        return info;
     }
 
     @SuppressLint("NewApi")
@@ -90,17 +69,17 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
         }
         catch (SQLException se)
         {
-            z = se.getMessage().toString();
+            info = se.getMessage().toString();
             Log.e("error here 1 : ", se.getMessage());
         }
         catch (ClassNotFoundException e)
         {
-            z = e.getMessage().toString();
+            info = e.getMessage().toString();
             Log.e("error here 2 : ", e.getMessage());
         }
         catch (Exception e)
         {
-            z = e.getMessage().toString();
+            info = e.getMessage().toString();
             Log.e("error here 3 : ", e.getMessage());
         }
         return connection;
@@ -108,8 +87,72 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
 
     @Override
     protected void onPostExecute(String s) {
-        //super.onPostExecute(s);
-        authActivity.makeToast(z);
+        authActivity.makeToast(info);
+    }
+
+    private String checklogIn () {
+        try
+        {
+            con = connectionclass(USERNAME, PASSWORD, DATABASE, IP);        // Connect to database
+            if (con == null)
+            {
+                info = "Check Your Internet Access!";
+            }
+            else
+            {
+                String query = "select * from accounts where email= '" + email +"' AND password= '" + password + "'";
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query);
+                if(rs.next())
+                {
+                    createUser(rs);
+                    info = "Hello, " + currentUser.surname;
+                    isSuccess=true;
+                    reportSession();
+                    //con.close();
+                }
+                else
+                {
+                    info = "Invalid Credentials!";
+                    isSuccess = false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            isSuccess = false;
+            info = ex.getMessage().toString() + "  ";
+            info = ex.toString();
+        }
+    return null;
+    }
+
+    private void createUser(ResultSet resultSet) {
+        try {
+            int id = resultSet.getInt("id");
+            String name = resultSet.getString("name");
+            String surname = resultSet.getString("surname");
+            String secondName = resultSet.getString("second_name");
+            String cellNumber = resultSet.getString("cell_number");
+            currentUser = new User(id, name, surname, secondName, email, password, cellNumber, authActivity.getDeviceId());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String reportSession () {
+        try
+        {
+                String query = "INSERT INTO report (user_id, surname, session_started, device) VALUES ('"  +
+                        currentUser.id + "', N'" + currentUser.surname + "', '" + getDateTime() + "', '" + currentUser.deviceID + "')";
+                Statement stmt = con.createStatement();
+                stmt.executeQuery(query);
+        }
+        catch (Exception ex)
+        {
+            info = ex.getMessage().toString() + "  ";
+        }
+        return null;
     }
 
     public void sendData (AuthActivity activity, String mail, String passwd) {
@@ -118,7 +161,12 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
         password = passwd;
     }
 
-
+    private String getDateTime() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(
+                "yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        Date date = new Date();
+        return dateFormat.format(date);
+    }
 }
 
 
