@@ -43,7 +43,7 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
     {
         switch (followingFunction) {
             case AUTHENTIFIER:
-                checklogIn();
+                checkLogIn();
                 break;
             case REPORTER:
 
@@ -90,7 +90,7 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
         authActivity.makeToast(info);
     }
 
-    private String checklogIn () {
+    private String checkLogIn () {
         try
         {
             con = connectionclass(USERNAME, PASSWORD, DATABASE, IP);        // Connect to database
@@ -143,10 +143,11 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
     private String reportSession () {
         try
         {
-                String query = "INSERT INTO report (user_id, surname, session_started, device) VALUES ('"  +
-                        currentUser.id + "', N'" + currentUser.surname + "', '" + getDateTime() + "', '" + currentUser.deviceID + "')";
-                Statement stmt = con.createStatement();
-                stmt.executeQuery(query);
+            String query = "INSERT INTO report (user_id, surname, session_started, device) VALUES ('"  +
+            currentUser.id + "', N'" + currentUser.surname + "', '" + getDateTime() + "', '" + currentUser.deviceID + "')";
+            Statement stmt = con.createStatement();
+            stmt.executeUpdate(query);
+            //ResultSet rs = stmt.executeQuery(query);
         }
         catch (Exception ex)
         {
