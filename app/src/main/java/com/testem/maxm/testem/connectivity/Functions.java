@@ -5,5 +5,5 @@ package com.testem.maxm.testem.connectivity;
  */
 
 public enum Functions {
-    AUTHENTIFIER, REPORTER, VIEWER, EDITOR, CHECKER
+    AUTHENTIFIER, REPORT_END, VIEWER, EDITOR, CHECKER
 }

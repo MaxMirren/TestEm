@@ -48,8 +48,6 @@ public class AuthActivity extends AppCompatActivity {
 
     private GoogleApiClient client;                                         //represents google api interaction
 
-    public static AuthActivity authActivity;                                //saves current class object
-
     /**
      * Connects the auth_activity.xml to current class and sets uo the most important methods
      * @param savedInstanceState represents saved state of layout components
@@ -60,7 +58,6 @@ public class AuthActivity extends AppCompatActivity {
         setContentView(R.layout.auth_activity);
         connectVariablesToViews();
         listenToFields();
-        authActivity = this;
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 

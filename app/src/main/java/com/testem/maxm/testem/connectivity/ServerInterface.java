@@ -1,9 +1,10 @@
 package com.testem.maxm.testem.connectivity;
 
 import com.testem.maxm.testem.AuthActivity;
-import com.testem.maxm.testem.connectivity.Functions;
+import com.testem.maxm.testem.inapp.WorkSpace;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.util.Log;
@@ -23,8 +24,10 @@ import java.util.Locale;
 
 public final class ServerInterface extends AsyncTask<String,String,String> {
 
+    public static final String NAME = "NAME";
+
     private Connection con;
-    private AuthActivity authActivity;
+    public static AuthActivity authActivity;
 
     final String USERNAME = "testemadmin";
     final String PASSWORD = "su";
@@ -45,8 +48,8 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
             case AUTHENTIFIER:
                 checkLogIn();
                 break;
-            case REPORTER:
-
+            case REPORT_END:
+                reportSessionEnded();
                 break;
             default:
                 break;
@@ -85,10 +88,6 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
         return connection;
     }
 
-    @Override
-    protected void onPostExecute(String s) {
-        authActivity.makeToast(info);
-    }
 
     private String checkLogIn () {
         try
@@ -100,15 +99,15 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
             }
             else
             {
-                String query = "select * from accounts where email= '" + email +"' AND password= '" + password + "'";
+                String query = "select * from student_accounts where email= '" + email +"' AND password= '" + password + "'";
                 Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query);
                 if(rs.next())
                 {
                     createUser(rs);
-                    info = "Hello, " + currentUser.surname;
+                    info = "Hello, " + currentUser.name;
                     isSuccess=true;
-                    reportSession();
+                    reportSessionStarted();
                     //con.close();
                 }
                 else
@@ -133,21 +132,38 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
             String name = resultSet.getString("name");
             String surname = resultSet.getString("surname");
             String secondName = resultSet.getString("second_name");
+            String group = resultSet.getString("group");
             String cellNumber = resultSet.getString("cell_number");
-            currentUser = new User(id, name, surname, secondName, email, password, cellNumber, authActivity.getDeviceId());
+            currentUser = new User(id, name, surname, secondName, group,  email, password, cellNumber, authActivity.getDeviceId());
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private String reportSession () {
+    private String reportSessionStarted () {
         try
         {
-            String query = "INSERT INTO report (user_id, surname, session_started, device) VALUES ('"  +
-            currentUser.id + "', N'" + currentUser.surname + "', '" + getDateTime() + "', '" + currentUser.deviceID + "')";
+            String query = "INSERT INTO report (user_id, surname, gr, time, action, device) VALUES ('"  +
+            currentUser.id + "', N'" + currentUser.surname + "', N'" + currentUser.group + "', '" +
+                    getDateTime() + "', 'Sign IN', '" + currentUser.deviceID + "')";
             Statement stmt = con.createStatement();
             stmt.executeUpdate(query);
-            //ResultSet rs = stmt.executeQuery(query);
+        }
+        catch (Exception ex)
+        {
+            info = ex.getMessage().toString() + "  ";
+        }
+        return null;
+    }
+
+    private String reportSessionEnded() {
+        try
+        {
+            String query = "INSERT INTO report (user_id, surname, gr, time, action, device) VALUES ('"  +
+                    currentUser.id + "', N'" + currentUser.surname + "', N'" + currentUser.group + "', '" +
+                    getDateTime() + "', 'Sign OUT', '" + currentUser.deviceID + "')";
+            Statement stmt = con.createStatement();
+            stmt.executeUpdate(query);
         }
         catch (Exception ex)
         {
@@ -167,6 +183,30 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
                 "yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         Date date = new Date();
         return dateFormat.format(date);
+    }
+
+    @Override
+    protected void onPostExecute(String s) {
+        switch (followingFunction) {
+            case AUTHENTIFIER:
+            authActivity.makeToast(info);
+            Intent intent = new Intent(authActivity, WorkSpace.class);
+            intent.putExtra(NAME, currentUser.name);
+            authActivity.startActivity(intent);
+            break;
+            case REPORT_END:
+                try {
+                    con.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    info = e.getMessage().toString();
+                    authActivity.makeToast(info);
+                }
+                break;
+            default:
+                break;
+        }
+
     }
 }
 
