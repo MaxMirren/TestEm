@@ -143,7 +143,7 @@ public final class ServerInterface extends AsyncTask<String,String,String> {
     private String reportSessionStarted () {
         try
         {
-            String query = "INSERT INTO report (user_id, surname, gr, time, action, device) VALUES ('"  +
+            String query = "INSERT INTO report_students (user_id, surname, gr, time, action, device) VALUES ('"  +
             currentUser.id + "', N'" + currentUser.surname + "', N'" + currentUser.group + "', '" +
                     getDateTime() + "', 'Sign IN', '" + currentUser.deviceID + "')";
             Statement stmt = con.createStatement();
